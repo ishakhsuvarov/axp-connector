@@ -7,6 +7,12 @@ jobs:
     working_directory: ~/repo
 
     steps:
+    - run: sudo apt-get update
+    - run: docker-php-ext-install bcmath
+    - run: docker-php-ext-install gd
+    - run: docker-php-ext-install pdo_mysql
+    - run: docker-php-ext-install soap
+    - run: docker-php-ext-install xsl
     - run: git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
     - run: mkdir axp-connector
     - checkout:
