@@ -16,7 +16,7 @@ jobs:
     - run: git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
     - run: mkdir axp-connector
     - checkout:
-        path: $CIRCLE_WORKING_DIRECTORY/axp-connector
+        path: axp-connector
 
     - run: composer install -n
     - run: composer config minimum-stability dev
