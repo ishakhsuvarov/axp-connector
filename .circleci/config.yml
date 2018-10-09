@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    docker:
+    - image: circleci/php:7.1
+
+    working_directory: ~/repo
+
+    steps:
+    - run: git clone git@github.com:magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
+    - run: mkdir axp-connector
+    - checkout:
+        path: $CIRCLE_WORKING_DIRECTORY/axp-connector
+
+    - run: composer install -n
+    - run: composer config minimum-stability dev
+    - run: composer config repositories.meta path ./axp-connector
+    - run: composer config repositories.modules path ./axp-connector/*/*
+    - run: composer require adobe/axp-connector
+
+    - run: phpunit -c dev/tests/unit
