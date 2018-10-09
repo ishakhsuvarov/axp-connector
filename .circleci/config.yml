@@ -24,4 +24,4 @@ jobs:
     - run: composer config repositories.modules path ./axp-connector/*/*
     - run: composer require adobe/axp-connector
 
-    - run: phpunit -c dev/tests/unit
+    - run: ./vendor/phpunit/phpunit/phpunit -c dev/tests/unit
