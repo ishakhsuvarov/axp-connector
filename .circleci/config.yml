@@ -8,7 +8,7 @@ jobs:
 
     steps:
     - run: sudo apt-get update
-    - run: sudo apt-get install php7.1-bcmath php7.1-gd php7.1-mysql php7.1-soap php7.1-xsl
+    - run: sudo apt-get install php-bcmath php-gd php-mysql php-soap php-xsl
     - run: git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
     - run: mkdir axp-connector
     - checkout:
