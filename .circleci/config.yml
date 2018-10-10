@@ -24,10 +24,10 @@ jobs:
         name: Installing dependencies
         command: composer install -n
         
-      - save_cache:
-          key: magento-dependencies-{{ checksum "composer.lock" }}
-          paths:
-            - "vendor"
+    - save_cache:
+        key: magento-dependencies-{{ checksum "composer.lock" }}
+        paths:
+          - "vendor"
     
     - run:
         name: Installing axp-connector
