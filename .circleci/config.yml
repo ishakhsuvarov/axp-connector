@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-    - image: ishakhsuvarov/axp-connector-testing:0.4
+    - image: ishakhsuvarov/axp-connector-testing:0.9
 
     working_directory: ~/repo
 
