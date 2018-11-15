@@ -28,13 +28,15 @@ class Display extends \Magento\Framework\View\Element\Template
      * @param \Magento\Framework\View\Element\Template\Context $context
      * @param \Adobe\AxpConnector\Helper\Data $helper
      * @param \Psr\Log\LoggerInterface $logger
+     * @param array $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Adobe\AxpConnector\Helper\Data $helper,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        array $data = []
     ) {
-        parent::__construct($context);
+        parent::__construct($context, $data);
         $this->helper = $helper;
         $this->_logger = $logger;
         $this->datalayerEvents = [];

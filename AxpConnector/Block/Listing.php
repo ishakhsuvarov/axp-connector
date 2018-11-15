@@ -22,7 +22,7 @@ class Listing extends Base
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Adobe\AxpConnector\Helper\Data $helper,
-        array $data
+        array $data = []
     ) {
         parent::__construct($context, $helper, $data);
     }

@@ -65,6 +65,10 @@ class CheckoutOnepageControllerSuccessActionObserver implements ObserverInterfac
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
+        if (!$this->helper->isEnabled()) {
+            return $this;
+        }
+
         $orderIds = $observer->getEvent()->getOrderIds();
         if (empty($orderIds) || !is_array($orderIds)) {
             return;

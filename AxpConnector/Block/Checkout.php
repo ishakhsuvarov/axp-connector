@@ -17,14 +17,14 @@ class Checkout extends Base
     /**
      * @param \Magento\Framework\View\Element\Template\Context $context
      * @param \Adobe\AxpConnector\Helper\Data $helper
-     * @param array $data
      * @param \Magento\Checkout\Model\Cart $cartModel
+     * @param array $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Adobe\AxpConnector\Helper\Data $helper,
-        array $data,
-        \Magento\Checkout\Model\Cart $cartModel
+        \Magento\Checkout\Model\Cart $cartModel,
+        array $data = []
     ) {
         parent::__construct($context, $helper, $data);
         $this->cartModel = $cartModel;

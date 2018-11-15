@@ -1,7 +1,7 @@
 defaults: &defaults
   working_directory: ~/magento
   docker:
-  - image: ishakhsuvarov/axp-connector-testing:unit-static-0.1
+  - image: ishakhsuvarov/axp-connector-testing:unit-static-0.2
 
 version: 2
 
@@ -9,7 +9,7 @@ jobs:
   build:
     <<: *defaults
     steps:
-    - run: 
+    - run:
         name: Building Magento 2.3-develop
         command: |
           git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
@@ -17,32 +17,32 @@ jobs:
 
     - checkout:
         path: axp-connector
-     
+
     - restore_cache:
         keys:
-          - magento-dependencies-{{ checksum "composer.lock" }}-v1
+        - magento-dependencies-{{ checksum "composer.lock" }}-v1
 
     - run:
         name: Installing dependencies
         command: composer install -n
-        
+
     - save_cache:
         key: magento-dependencies-{{ checksum "composer.lock" }}-v1
         paths:
-          - "vendor"
-    
+        - "vendor"
+
     - run:
         name: Installing axp-connector
         command: |
-            composer config minimum-stability dev
-            composer config repositories.metapackage path "./*"
-            composer config repositories.modules path "./*/*/"
-            composer require adobe/axp-connector
+          composer config minimum-stability dev
+          composer config repositories.metapackage path "./*"
+          composer config repositories.modules path "./*/*/"
+          composer require adobe/axp-connector
 
     - persist_to_workspace:
         root: .
         paths:
-          - .
+        - .
 
   unit_test:
     <<: *defaults
@@ -73,6 +73,88 @@ jobs:
         name: Static test
         command: ./vendor/phpunit/phpunit/phpunit -c dev/tests/static
 
+  integration_test:
+    working_directory: ~/magento
+    docker:
+    - image: ishakhsuvarov/axp-connector-testing:unit-static-0.2
+    - image: mysql:5.6
+      environment:
+        MYSQL_DATABASE: magento_integration_tests
+        MYSQL_ALLOW_EMPTY_PASSWORD: true
+    - image: rabbitmq:3.6-management
+    - image: elasticsearch:2.3
+
+    parallelism: 4
+
+    steps:
+    - attach_workspace:
+        at: .
+
+    - run:
+        name: Install dockerize
+        command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+        environment:
+          DOCKERIZE_VERSION: v0.3.0
+
+    - run:
+        name: Wait for services
+        command: |
+          dockerize -wait tcp://localhost:3306 -timeout 1m
+          dockerize -wait tcp://localhost:9200 -timeout 1m
+          dockerize -wait tcp://localhost:5672 -timeout 1m
+          dockerize -wait tcp://localhost:15672 -timeout 1m
+
+    - run:
+        name: Configuring environment for integration tests
+        command: |
+          mysql -h127.0.0.1 -uroot -e 'SET @@global.sql_mode = NO_ENGINE_SUBSTITUTION;'
+          mv dev/tests/integration/etc/install-config-mysql.travis.php.dist dev/tests/integration/etc/install-config-mysql.php
+
+    - run:
+        name: Preparing test suite
+        command: |
+          mkdir -p ~/phpunit
+          mv dev/tests/integration/phpunit.xml.dist dev/tests/integration/configuration_base.xml
+          xmlstarlet ed -L -d "/phpunit/testsuites/testsuite[1]" dev/tests/integration/configuration_base.xml
+          xmlstarlet ed -L -d "/phpunit/testsuites/testsuite[1]/directory" dev/tests/integration/configuration_base.xml
+          cd dev/tests/integration
+          find testsuite/Magento -name "*Test.php" -type f -follow -print > test_list.txt
+
+          # Temporary skipped for investigation
+          sed -i '\|testsuite/Magento/MessageQueue/Model/Cron/ConsumersRunnerTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Customer/Model/ResourceModel/CustomerRepositoryTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Customer/Block/Adminhtml/EditTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Customer/Model/AccountManagementTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Catalog/Model/Product/UrlTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Sales/Model/AdminOrder/CreateTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/ImportExport/Model/ImportTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Customer/Model/ResourceModel/AddressRepositoryTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Checkout/Model/SessionTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Reports/Model/ResourceModel/Report/Product/Viewed/CollectionTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/CatalogRule/Model/ResourceModel/Product/ConditionsToCollectionApplierTest.php|d' test_list.txt
+          sed -i '\|testsuite/Magento/Framework/Session/SessionManagerTest.php|d' test_list.txt
+
+          circleci tests split test_list.txt > test_list_partial.txt
+          circleci tests split --index=0 --total=2 test_list_partial.txt > test_list_partial_1.txt
+          circleci tests split --index=1 --total=2 test_list_partial.txt > test_list_partial_2.txt
+          cp configuration_base.xml configuration_1.xml
+          cp configuration_base.xml configuration_2.xml
+          cat test_list_partial_1.txt | while read line; do xmlstarlet ed -L -a "(/phpunit/testsuites/testsuite[1]/*)[1]" -t elem -n file -v $line configuration_1.xml; done
+          cat test_list_partial_2.txt | while read line; do xmlstarlet ed -L -a "(/phpunit/testsuites/testsuite[1]/*)[1]" -t elem -n file -v $line configuration_2.xml; done
+          cd ../../..
+
+    - run:
+        name: Integration Test (Batch 1)
+        command: |
+          mv dev/tests/integration/configuration_1.xml dev/tests/integration/phpunit.xml
+          ./vendor/phpunit/phpunit/phpunit -c dev/tests/integration -dmemory_limit=3G
+
+    - run:
+        name: Integration Test (Batch 2)
+        command: |
+          mv dev/tests/integration/configuration_2.xml dev/tests/integration/phpunit.xml
+          ./vendor/phpunit/phpunit/phpunit -c dev/tests/integration -dmemory_limit=3G
+
 workflows:
   version: 2
   build-test:
@@ -84,3 +166,8 @@ workflows:
     - static_test:
         requires:
         - build
+    - integration_test:
+        requires:
+        - build
+        - unit_test
+        - static_test
