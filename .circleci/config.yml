@@ -1,5 +1,5 @@
 defaults: &defaults
-  working_directory: ~/$CIRCLE_PROJECT_USERNAME
+  working_directory: ~/magento
   docker:
   - image: ishakhsuvarov/mde-testing:latest
 
@@ -32,7 +32,7 @@ jobs:
           - "vendor"
     
     - run:
-        name: Installing $CIRCLE_PROJECT_REPONAME
+        name: Installation
         command: |
             composer config minimum-stability dev
             composer config repositories.metapackage path "./*"
