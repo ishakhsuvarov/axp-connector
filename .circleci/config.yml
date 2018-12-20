@@ -1,7 +1,7 @@
 defaults: &defaults
-  working_directory: ~/magento
+  working_directory: ~/$CIRCLE_PROJECT_USERNAME
   docker:
-  - image: ishakhsuvarov/axp-connector-testing:unit-static-0.1
+  - image: ishakhsuvarov/mde-testing:latest
 
 version: 2
 
@@ -13,10 +13,10 @@ jobs:
         name: Building Magento 2.3-develop
         command: |
           git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
-          mkdir axp-connector
+          mkdir $CIRCLE_PROJECT_REPONAME
 
     - checkout:
-        path: axp-connector
+        path: $CIRCLE_PROJECT_REPONAME
      
     - restore_cache:
         keys:
@@ -32,7 +32,7 @@ jobs:
           - "vendor"
     
     - run:
-        name: Installing axp-connector
+        name: Installing $CIRCLE_PROJECT_REPONAME
         command: |
             composer config minimum-stability dev
             composer config repositories.metapackage path "./*"
@@ -65,8 +65,8 @@ jobs:
     - run:
         name: Prepare file list
         command: |
-          find axp-connector -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_axp.txt
-          find axp-connector -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_axp.added.txt
+          find $CIRCLE_PROJECT_REPONAME -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.txt
+          find $CIRCLE_PROJECT_REPONAME -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.added.txt
           echo "adobe/module-axp-connector" > dev/tests/static/testsuite/Magento/Test/Integrity/_files/blacklist/composer_root_modules_axp_connector.txt
 
     - run:
