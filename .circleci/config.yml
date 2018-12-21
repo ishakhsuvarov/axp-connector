@@ -1,5 +1,8 @@
 defaults: &defaults
   working_directory: ~/magento
+  environment:
+    MDE_COMPOSER_MODULE: adobe/module-axp-connector
+    MDE_COMPOSER_METAPACKAGE: adobe/axp-connector
   docker:
   - image: ishakhsuvarov/mde-testing:latest
 
@@ -10,9 +13,8 @@ jobs:
     <<: *defaults
     steps:
     - run:
-        name: Building Magento 2.3-develop
-        command: |
-          git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
+        name: Cloning Magento 2.3-develop
+        command: git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
 
     - checkout:
         path: mde
@@ -36,7 +38,7 @@ jobs:
             composer config minimum-stability dev
             composer config repositories.metapackage path "./*"
             composer config repositories.modules path "./*/*/"
-            composer require adobe/axp-connector
+            composer require $MDE_COMPOSER_METAPACKAGE
 
     - persist_to_workspace:
         root: .
@@ -64,8 +66,8 @@ jobs:
     - run:
         name: Prepare file list
         command: |
-          find axp-connector -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.txt
-          find axp-connector -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.added.txt
+          find mde -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.txt
+          find mde -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.added.txt
           echo "$MDE_COMPOSER_MODULE" > dev/tests/static/testsuite/Magento/Test/Integrity/_files/blacklist/composer_root_modules_mde.txt
 
     - run:
