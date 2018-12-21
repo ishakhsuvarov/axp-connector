@@ -9,15 +9,15 @@ jobs:
   build:
     <<: *defaults
     steps:
-    - run: 
+    - run:
         name: Building Magento 2.3-develop
         command: |
           git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
-          mkdir $CIRCLE_PROJECT_REPONAME
+          mkdir mde
 
     - checkout:
-        path: $CIRCLE_PROJECT_REPONAME
-     
+        path: mde
+
     - restore_cache:
         keys:
           - magento-dependencies-{{ checksum "composer.lock" }}-v1
@@ -25,14 +25,14 @@ jobs:
     - run:
         name: Installing dependencies
         command: composer install -n
-        
+
     - save_cache:
         key: magento-dependencies-{{ checksum "composer.lock" }}-v1
         paths:
           - "vendor"
-    
+
     - run:
-        name: Installation
+        name: Installing MDE
         command: |
             composer config minimum-stability dev
             composer config repositories.metapackage path "./*"
@@ -65,9 +65,9 @@ jobs:
     - run:
         name: Prepare file list
         command: |
-          find $CIRCLE_PROJECT_REPONAME -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.txt
-          find $CIRCLE_PROJECT_REPONAME -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.added.txt
-          echo "adobe/module-axp-connector" > dev/tests/static/testsuite/Magento/Test/Integrity/_files/blacklist/composer_root_modules_axp_connector.txt
+          find axp-connector -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.txt
+          find axp-connector -not -path '*/.*/*' -not -name '.*' -type f -follow -print > dev/tests/static/testsuite/Magento/Test/_files/changed_files_mde.added.txt
+          echo "$MDE_COMPOSER_MODULE" > dev/tests/static/testsuite/Magento/Test/Integrity/_files/blacklist/composer_root_modules_mde.txt
 
     - run:
         name: Static test
