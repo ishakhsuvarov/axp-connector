@@ -13,7 +13,6 @@ jobs:
         name: Building Magento 2.3-develop
         command: |
           git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
-          mkdir mde
 
     - checkout:
         path: mde
