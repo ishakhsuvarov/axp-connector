@@ -3,6 +3,8 @@ defaults: &defaults
   environment:
     MDE_COMPOSER_MODULE: adobe/module-axp-connector
     MDE_COMPOSER_METAPACKAGE: adobe/axp-connector
+    CORE_GIT_REPOSITORY: ishakhsuvarov/magento2
+    CORE_GIT_BRANCH: openssl-cipher-methods-case
   docker:
   - image: ishakhsuvarov/mde-testing:latest
 
@@ -14,7 +16,7 @@ jobs:
     steps:
     - run:
         name: Cloning Magento 2.3-develop
-        command: git clone https://github.com/magento/magento2.git --depth 1 --single-branch --branch 2.3-develop .
+        command: git clone https://github.com/$CORE_GIT_REPOSITORY.git --depth 1 --single-branch --branch $CORE_GIT_BRANCH .
 
     - checkout:
         path: mde
